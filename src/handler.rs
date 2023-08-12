@@ -17,12 +17,19 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use serde_json::json;
 use sqlx::Row;
 
+#[get("/healthchecker")]
+async fn health_checker_handler() -> impl Responder {
+    const MESSAGE: &str = "JWT Authentication in Rust using Actix-web, Postgres, and SQLX";
+
+    HttpResponse::Ok().json(json!({"status": "success", "message": MESSAGE}))
+}
+
 #[post("/auth/register")]
 async fn register_user_handler(
     body: web::Json<RegisterUserSchema>,
     data: web::Data<AppState>,
 ) -> impl Responder {
-    let exists: bool = sqlx::query("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1")
+    let exists: bool = sqlx::query("SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)")
         .bind(body.email.to_owned())
         .fetch_one(&data.db)
         .await
@@ -31,7 +38,7 @@ async fn register_user_handler(
 
     if exists {
         return HttpResponse::Conflict().json(
-            serde_json::json!({"status": "fail", "message": "User with that email already exists"}),
+            serde_json::json!({"status": "fail","message": "User with that email already exists"}),
         );
     }
 
@@ -52,7 +59,7 @@ async fn register_user_handler(
 
     match query_result {
         Ok(user) => {
-            let user_response = serde_json::json!({"status": "success", "data": serde_json::json!({
+            let user_response = serde_json::json!({"status": "success","data": serde_json::json!({
                 "user": filter_user_record(&user)
             })});
 
@@ -60,11 +67,10 @@ async fn register_user_handler(
         }
         Err(e) => {
             return HttpResponse::InternalServerError()
-                .json(serde_json::json!({"status": "error", "message": format!("{:?}", e)}))
+                .json(serde_json::json!({"status": "error","message": format!("{:?}", e)}));
         }
     }
 }
-
 #[post("/auth/login")]
 async fn login_user_handler(
     body: web::Json<LoginUserSchema>,
@@ -131,7 +137,7 @@ async fn logout_handler(_: jwt_auth::JwtMiddleware) -> impl Responder {
 
 #[get("/users/me")]
 async fn get_me_handler(
-    req: HttpResponse,
+    req: HttpRequest,
     data: web::Data<AppState>,
     _: jwt_auth::JwtMiddleware,
 ) -> impl Responder {
@@ -144,7 +150,7 @@ async fn get_me_handler(
         .unwrap();
 
     let json_response = serde_json::json!({
-        "status": "success",
+        "status":  "success",
         "data": serde_json::json!({
             "user": filter_user_record(&user)
         })
@@ -174,5 +180,5 @@ pub fn config(conf: &mut web::ServiceConfig) {
         .service(logout_handler)
         .service(get_me_handler);
 
-    conf.service(scope)
+    conf.service(scope);
 }
