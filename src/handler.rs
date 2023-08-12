@@ -17,19 +17,6 @@ use jsonwebtoken::{encode, EncodingKey, Header};
 use serde_json::json;
 use sqlx::Row;
 
-fn filter_user_record(user: &User) -> FilteredUser {
-    FilteredUser {
-        id: user.id.to_string(),
-        email: user.email.to_owned(),
-        name: user.name.to_owned(),
-        photo: user.photo.to_owned(),
-        role: user.role.to_owned(),
-        verified: user.verified,
-        createdAt: user.created_at.unwrap(),
-        updatedAt: user.updated_at.unwrap(),
-    }
-}
-
 #[post("/auth/register")]
 async fn register_user_handler(
     body: web::Json<RegisterUserSchema>,
@@ -164,6 +151,19 @@ async fn get_me_handler(
     });
 
     HttpResponse::Ok().json(json_response)
+}
+
+fn filter_user_record(user: &User) -> FilteredUser {
+    FilteredUser {
+        id: user.id.to_string(),
+        email: user.email.to_owned(),
+        name: user.name.to_owned(),
+        photo: user.photo.to_owned(),
+        role: user.role.to_owned(),
+        verified: user.verified,
+        createdAt: user.created_at.unwrap(),
+        updatedAt: user.updated_at.unwrap(),
+    }
 }
 
 pub fn config(conf: &mut web::ServiceConfig) {
